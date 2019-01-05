@@ -1,12 +1,10 @@
 package org.iota.qupla;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
 import org.iota.qupla.abra.context.AbraEvalContext;
 import org.iota.qupla.dispatcher.Dispatcher;
 import org.iota.qupla.exception.CodeException;
 import org.iota.qupla.exception.ExitException;
+import org.iota.qupla.helper.ModuleLoader;
 import org.iota.qupla.helper.TritConverter;
 import org.iota.qupla.helper.TritVector;
 import org.iota.qupla.qupla.context.QuplaEvalContext;
@@ -22,6 +20,9 @@ import org.iota.qupla.qupla.parser.Token;
 import org.iota.qupla.qupla.parser.Tokenizer;
 import org.iota.qupla.qupla.statement.ExecStmt;
 import org.iota.qupla.qupla.statement.UseStmt;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 
 public class Qupla
 {
@@ -135,7 +136,7 @@ public class Qupla
             continue;
           }
 
-          QuplaModule.parse(arg);
+          QuplaModule.parse(arg, new ModuleLoader(/*-Dmodulepath=MODULE[:MODULE]*/));
         }
 
         singleModule = new QuplaModule(QuplaModule.allModules.values());

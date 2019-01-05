@@ -1,6 +1,8 @@
 package org.iota.qupla.qupla.expression;
 
 import org.iota.qupla.exception.CodeException;
+import org.iota.qupla.helper.ModuleLoader;
+import org.iota.qupla.qupla.parser.QuplaModule;
 import org.iota.qupla.qupla.parser.Token;
 import org.iota.qupla.qupla.parser.Tokenizer;
 import org.iota.qupla.qupla.statement.ImportStmt;
@@ -13,7 +15,8 @@ import org.mockito.Mockito;
  * Unit test of {@link ImportStmt}
  */
 public class ImportStmtTest {
-    private final org.iota.qupla.qupla.parser.QuplaModule moduleMock = Mockito.mock(org.iota.qupla.qupla.parser.QuplaModule.class);
+    private final QuplaModule moduleMock = Mockito.mock(QuplaModule.class);
+    private final ModuleLoader moduleLoaderMock = Mockito.mock(ModuleLoader.class);
     private final Tokenizer tokenizer = new Tokenizer();
 
     @Before
@@ -26,7 +29,7 @@ public class ImportStmtTest {
         tokenizer.lines.add("import Qupla");
         tokenizer.nextToken();
 
-        final ImportStmt underTest = new ImportStmt(tokenizer);
+        final ImportStmt underTest = new ImportStmt(tokenizer,moduleLoaderMock);
         Assert.assertEquals("Qupla", underTest.name);
     }
 
@@ -35,7 +38,7 @@ public class ImportStmtTest {
         tokenizer.lines.add("import Qupla Test");
         tokenizer.nextToken();
 
-        final ImportStmt underTest = new ImportStmt(tokenizer);
+        final ImportStmt underTest = new ImportStmt(tokenizer, moduleLoaderMock);
         Assert.assertEquals("Qupla", underTest.name);
     }
 
@@ -45,7 +48,7 @@ public class ImportStmtTest {
         tokenizer.nextToken();
 
         try {
-            new ImportStmt(tokenizer);
+            new ImportStmt(tokenizer, moduleLoaderMock);
             Assert.fail("Import without 'name' must fail");
         } catch (CodeException e) {
             Assert.assertEquals("Expected module name", e.getMessage());

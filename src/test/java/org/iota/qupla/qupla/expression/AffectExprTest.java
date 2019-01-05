@@ -9,6 +9,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+/**
+ * Unit test of {@link AffectExpr}
+ */
 public class AffectExprTest {
     private final QuplaModule moduleMock = Mockito.mock(QuplaModule.class);
     private final Tokenizer tokenizer = new Tokenizer();

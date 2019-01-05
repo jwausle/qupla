@@ -1,12 +1,7 @@
 package org.iota.qupla.qupla.parser;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-
 import org.iota.qupla.exception.CodeException;
+import org.iota.qupla.helper.ModuleLoader;
 import org.iota.qupla.qupla.context.QuplaAnyNullContext;
 import org.iota.qupla.qupla.expression.base.BaseExpr;
 import org.iota.qupla.qupla.statement.ExecStmt;
@@ -16,6 +11,11 @@ import org.iota.qupla.qupla.statement.LutStmt;
 import org.iota.qupla.qupla.statement.TemplateStmt;
 import org.iota.qupla.qupla.statement.TypeStmt;
 import org.iota.qupla.qupla.statement.UseStmt;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Set;
 
 public class QuplaModule extends BaseExpr
 {
@@ -56,46 +56,18 @@ public class QuplaModule extends BaseExpr
     name = "{SINGLE_MODULE}";
   }
 
-  private static String getPathName(final File file)
+  public static QuplaModule parse(String name, ModuleLoader moduleLoader)
   {
-    try
-    {
-      if (projectRoot == null)
-      {
-        projectRoot = new File(".").getCanonicalPath();
-      }
 
-      final String pathName = file.getCanonicalPath();
-      if (!pathName.startsWith(projectRoot))
-      {
-        throw new CodeException("Not in project folder: " + file.getPath());
-      }
-
-      // normalize path name by removing root and using forward slash separators
-      return pathName.substring(projectRoot.length() + 1).replace('\\', '/');
-    }
-    catch (final IOException e)
-    {
-      e.printStackTrace();
-      throw new CodeException("Cannot getCanonicalPath for: " + file.getPath());
-    }
-  }
-
-  public static QuplaModule parse(final String name)
-  {
-    final File library = new File(name);
-    if (!library.exists() || !library.isDirectory())
-    {
-      throw new CodeException("Invalid module name: " + name);
-    }
-
-    final String pathName = getPathName(library);
-    final QuplaModule existingModule = allModules.get(pathName);
+    final QuplaModule existingModule = allModules.get(name);
     if (existingModule != null)
     {
       // already loaded library module, do nothing
       return existingModule;
     }
+
+
+    final String pathName = name;
 
     logLine("QuplaModule: " + pathName);
     if (loading.containsKey(pathName))
@@ -103,9 +75,10 @@ public class QuplaModule extends BaseExpr
       throw new CodeException("Import dependency cycle detected");
     }
 
-    final QuplaModule module = new QuplaModule(pathName);
+    final QuplaModule module = moduleLoader.loadModule(name)
+            .orElseThrow(() -> new RuntimeException("Cannot load module '" + name + "'"));
     loading.put(pathName, module);
-    module.parseSources(library);
+    module.parseSources(moduleLoader, pathName);
     module.analyze();
     loading.remove(pathName);
     allModules.put(pathName, module);
@@ -223,38 +196,37 @@ public class QuplaModule extends BaseExpr
     throw new CodeException("entities WTF?");
   }
 
-  private void parseSource(final File source)
+  private void parseSource(ModuleLoader moduleLoader, final String source)
   {
-    final String pathName = getPathName(source);
-    logLine("QuplaSource: " + pathName);
+    logLine("QuplaSource: " + source);
     final Tokenizer tokenizer = new Tokenizer();
     tokenizer.module = this;
-    tokenizer.readFile(source);
-    sources.add(new QuplaSource(tokenizer, pathName));
+    tokenizer.read(moduleLoader.getModuleAsStream(source));
+    sources.add(new QuplaSource(tokenizer, source, moduleLoader));
   }
 
-  private void parseSources(final File library)
+  private void parseSources(ModuleLoader moduleLoader, final String library)
   {
-    final File[] files = library.listFiles();
-    if (files == null)
+    Set<String> submodules = moduleLoader.getSubModulePaths(library);
+    if (submodules == null)
     {
       error(null, "parseLibrarySources WTF?");
       return;
     }
 
-    for (final File next : files)
+    for (final String next : submodules)
     {
-      if (next.isDirectory())
+      if (moduleLoader.isSubModule(next))
       {
         // recursively parse all sources
-        parseSources(next);
+        parseSources(moduleLoader, next);
         continue;
       }
 
-      final String path = next.getPath();
+      final String path = next;
       if (path.endsWith(".qpl"))
       {
-        parseSource(next);
+        parseSource(moduleLoader, next);
       }
     }
 

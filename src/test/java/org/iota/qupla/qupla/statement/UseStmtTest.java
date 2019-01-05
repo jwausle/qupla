@@ -7,9 +7,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+/**
+ * Unit test of {@link UseStmt}
+ */
 public class UseStmtTest {
-    private final QuplaModule moduleMock = Mockito.mock(QuplaModule
-            .class);
+    private final QuplaModule moduleMock = Mockito.mock(QuplaModule.class);
     private final Tokenizer tokenizer = new Tokenizer();
 
     @Before

@@ -7,6 +7,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+/**
+ * Unit test of {@link PostfixExpr}
+ */
 public class PostfixExprTest {
     private final QuplaModule moduleMock = Mockito.mock(QuplaModule.class);
     private final Tokenizer tokenizer = new Tokenizer();

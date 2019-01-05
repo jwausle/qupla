@@ -1,7 +1,10 @@
 package org.iota.qupla.qupla.parser;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.nio.file.Files;
+import java.io.FileReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -149,14 +152,15 @@ public class Tokenizer
     throw new CodeException(token, "Invalid character: '" + c + "'");
   }
 
-  public ArrayList<String> readFile(final File in)
+  public ArrayList<String> read(final InputStream in)
   {
-    try
+    try (final BufferedReader br = new BufferedReader(new InputStreamReader(in)))
     {
       lines.clear();
-      if (in.exists())
+
+      for (String line = br.readLine(); line != null; line = br.readLine())
       {
-        lines.addAll(Files.readAllLines(in.toPath()));
+        lines.add(line);
       }
     }
     catch (final Exception e)

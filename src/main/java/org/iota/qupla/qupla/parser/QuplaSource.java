@@ -1,5 +1,6 @@
 package org.iota.qupla.qupla.parser;
 
+import org.iota.qupla.helper.ModuleLoader;
 import org.iota.qupla.qupla.expression.base.BaseExpr;
 import org.iota.qupla.qupla.statement.ExecStmt;
 import org.iota.qupla.qupla.statement.FuncStmt;
@@ -9,14 +10,16 @@ import org.iota.qupla.qupla.statement.TemplateStmt;
 import org.iota.qupla.qupla.statement.TypeStmt;
 import org.iota.qupla.qupla.statement.UseStmt;
 
+import java.util.Objects;
 public class QuplaSource extends BaseExpr
 {
+  private final ModuleLoader moduleLoader;
   public String pathName;
 
-  public QuplaSource(final Tokenizer tokenizer, final String pathName)
+  public QuplaSource(final Tokenizer tokenizer, final String pathName, ModuleLoader moduleLoader)
   {
     super(tokenizer);
-
+    this.moduleLoader = Objects.requireNonNull(moduleLoader,"'moduleLoader' must not be null.");
     this.pathName = pathName;
     module.currentSource = this;
 
@@ -35,7 +38,7 @@ public class QuplaSource extends BaseExpr
         break;
 
       case Token.TOK_IMPORT:
-        module.imports.add(new ImportStmt(tokenizer));
+        module.imports.add(new ImportStmt(tokenizer, moduleLoader));
         break;
 
       case Token.TOK_LUT:
@@ -80,5 +83,19 @@ public class QuplaSource extends BaseExpr
   public String toString()
   {
     return pathName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    QuplaSource source = (QuplaSource) o;
+    return Objects.equals(moduleLoader, source.moduleLoader) &&
+            Objects.equals(pathName, source.pathName);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(moduleLoader, pathName);
   }
 }
