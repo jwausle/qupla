@@ -1,9 +1,9 @@
 package org.iota.qupla.qupla.expression;
 
-import org.iota.qupla.helper.TritVector;
-import org.iota.qupla.qupla.context.base.QuplaBaseContext;
 import org.iota.qupla.qupla.expression.base.BaseExpr;
 import org.iota.qupla.qupla.expression.constant.ConstTypeName;
+import org.iota.qupla.helper.TritVector;
+import org.iota.qupla.qupla.context.base.QuplaBaseContext;
 import org.iota.qupla.qupla.parser.Token;
 import org.iota.qupla.qupla.parser.Tokenizer;
 
