@@ -31,24 +31,13 @@ Current command line flags
 
 
 
-Example of Java compilation and running Qupla on Windows command line after extracting sources into \Qupla folder:
+Example of Java compilation and running Qupla on command line:
 
-    md \Qupla\build
-    cd \Qupla\qupla\src\main\java
-    "C:\Program Files\Java\jdk1.8.0\bin\javac" -d \Qupla\build org\iota\qupla\Qupla.java
-    cd \Qupla\qupla\src\main\resources
-    java -classpath \Qupla\build org.iota.qupla.Qupla Examples "fibonacci(10)"
-
-
-
-Example of Java compilation and running Qupla on Mac command line after extracting sources into $HOME/Qupla folder:
-
-    cd $HOME/Qupla
-    mkdir build
-    javac -d $HOME/Qupla/build org/iota/qupla/Qupla.java
-    cd $HOME/Qupla/qupla/src/main/resources
-    java -classpath $HOME/Qupla/build org.iota.qupla.Qupla Examples "fibonacci(10)"
-
+```
+$ gradle clean build fatJar
+$ cd build/resources/main
+$ java java -jar ../../qupla.jar Examples "fibonacci(10)"
+```
 
 
 Qupla statements are grouped in logical source files within a folder whose name specifies the module name these source files belong to.

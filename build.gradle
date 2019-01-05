@@ -1,5 +1,14 @@
 // copyright IOTA Foundation
-apply plugin: 'java'
+plugins {
+    id 'java'
+    id 'idea'
+    id 'org.jetbrains.kotlin.jvm' version '1.3.11'
+}
+
+group 'org.iota'
+version '0.1-SNAPSHOT'
+
+sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
@@ -7,7 +16,9 @@ repositories {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile "org.mockito:mockito-core:2.+"
 //    compile 'org.bytedeco.javacpp-presets:llvm-platform:6.0.1-1.4.2'
 //    compile 'com.github.iotaledger:iota-java:1.0.0-beta2'
 //    compile group: 'org.zeromq', name: 'jeromq', version: '0.4.3'
@@ -17,3 +28,22 @@ dependencies {
 //    // prevents slf4j from printing to System.err, see https://www.slf4j.org/codes.html#StaticLoggerBinder
 //    compile group: 'org.slf4j', name: 'slf4j-nop', version: '1.8.0-beta2'
 }
+
+compileKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+compileTestKotlin {
+    kotlinOptions.jvmTarget = "1.8"
+}
+
+task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'org.iota.qupla.Qupla'
+    }
+    archiveName = 'qupla.jar'
+    destinationDir = file("$rootDir/build/")
+    from { configurations.runtime.collect { it.isDirectory() && !it.name.equals("qupla.jar") ? it : zipTree(it) } }
+    with jar
+}
+build.finalizedBy(fatJar)
+
