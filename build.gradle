@@ -1,7 +1,7 @@
 // copyright IOTA Foundation
 plugins {
     id 'java'
-    id 'idea'
+    id 'idea' // for 'gradle idea' to generate intellij configuration
 }
 
 group 'org.iota'
@@ -10,11 +10,14 @@ version '0.1-SNAPSHOT'
 sourceCompatibility = 1.8
 
 repositories {
-    mavenCentral()
     maven { url 'https://jitpack.io' }
+    mavenCentral()
 }
 
 dependencies {
+    testCompile "junit:junit:4.12"
+    testCompile "org.mockito:mockito-core:2.+"
+
     compile fileTree(dir: 'libs', include: ['*.jar'])
 
     testCompile group: 'junit', name: 'junit', version: '4.12'

@@ -1,8 +1,7 @@
 package org.iota.qupla.qupla.parser;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -37,10 +36,7 @@ public class Tokenizer
     // end of file?
     if (lineNr == lines.size())
     {
-      token = new Token();
-      token.source = module.currentSource;
-      token.lineNr = lineNr;
-      token.id = Token.TOK_EOF;
+      token = new Token(lineNr, colNr, module.currentSource, Token.TOK_EOF, Token.UNKNOWN_SYMBOL, "");
       return token;
     }
 
@@ -62,12 +58,7 @@ public class Tokenizer
     }
 
     // found start of next token
-    token = new Token();
-    token.source = module.currentSource;
-    token.lineNr = lineNr;
-    token.colNr = colNr;
-    token.text = line.substring(colNr);
-
+    token = new Token(lineNr, colNr, module.currentSource, Token.UNKNONW_ID, Token.UNKNOWN_SYMBOL, line.substring(colNr));
     // first parse multi-character tokens
 
     // skip comment-to-end-of-line
@@ -82,9 +73,7 @@ public class Tokenizer
     final Integer tokenId = tokenMap.get(token.text.substring(0, 1));
     if (tokenId != null)
     {
-      token.id = tokenId;
-      token.text = tokens[tokenId];
-      colNr++;
+      token = token.resetText(tokens[tokenId], tokenId, colNr++);
       return token;
     }
 
@@ -92,7 +81,7 @@ public class Tokenizer
     char c = token.text.charAt(0);
     if (Character.isDigit(c))
     {
-      token.id = Token.TOK_NUMBER;
+      token = token.resetId(Token.TOK_NUMBER);
       for (int i = 0; i < token.text.length(); i++)
       {
         c = token.text.charAt(i);
@@ -103,11 +92,11 @@ public class Tokenizer
 
         if (token.id == Token.TOK_NUMBER && c == '.')
         {
-          token.id = Token.TOK_FLOAT;
+          token = token.resetId(Token.TOK_FLOAT);
           continue;
         }
 
-        token.text = token.text.substring(0, i);
+        token = token.resetText(token.text.substring(0, i));
         break;
       }
 
@@ -118,7 +107,7 @@ public class Tokenizer
     // identifier?
     if (Character.isLetter(c) || c == '_')
     {
-      token.id = Token.TOK_NAME;
+      token = token.resetId(Token.TOK_NAME);
       for (int i = 1; i < token.text.length(); i++)
       {
         c = token.text.charAt(i);
@@ -127,7 +116,7 @@ public class Tokenizer
           continue;
         }
 
-        token.text = token.text.substring(0, i);
+        token = token.resetText(token.text.substring(0, i));
         break;
       }
 
@@ -137,19 +126,19 @@ public class Tokenizer
       final Integer keyword = tokenMap.get(token.text);
       if (keyword != null)
       {
-        token.id = keyword;
+        token = token.resetId(keyword);
         return token;
       }
 
       final Integer symbol = symbolMap.get(token.text);
       if (symbol != null)
       {
-        token.text = symbols.get(symbol);
-        token.symbol = symbol;
+        token = token.resetText(symbols.get(symbol));
+        token = token.resetSymbol(symbol);
       }
       else
       {
-        token.symbol = symbols.size();
+        token = token.resetSymbol(symbols.size());
         symbolMap.put(token.text, token.symbol);
         symbols.add(token.text);
       }
@@ -167,12 +156,7 @@ public class Tokenizer
       lines.clear();
       if (in.exists())
       {
-        final BufferedReader br = new BufferedReader(new FileReader(in));
-        for (String line = br.readLine(); line != null; line = br.readLine())
-        {
-          lines.add(line);
-        }
-        br.close();
+        lines.addAll(Files.readAllLines(in.toPath()));
       }
     }
     catch (final Exception e)
