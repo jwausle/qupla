@@ -47,12 +47,12 @@ public class ModuleLoaderTest {
     @Test
     public void when_module_parse_Examples_from_zipModules_then_succ() throws IOException {
         final Path quplaZip = zip(System.getProperty("user.dir") + "/src/main/resources/Qupla");
-        final Path examplesZip = zip(System.getProperty("user.dir") + "/src/main/resources/Examples");
+        final Path examplesZip = zip(System.getProperty("user.dir") + "/src/main/resources/Fibonacci");
 
         underTest = new ModuleLoader(quplaZip.toString() + ":" + examplesZip.toString());
-        final QuplaModule moduleExample = QuplaModule.parse("Examples", underTest);
+        final QuplaModule moduleExample = QuplaModule.parse("Fibonacci", underTest);
 
-        final Optional<QuplaModule> examples = underTest.loadModule("Examples");
+        final Optional<QuplaModule> examples = underTest.loadModule("Fibonacci");
         Assert.assertTrue(examples.isPresent());
         examples.ifPresent(module -> {
             module.analyze();

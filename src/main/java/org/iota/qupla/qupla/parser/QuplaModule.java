@@ -1,5 +1,12 @@
 package org.iota.qupla.qupla.parser;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+
+import org.iota.qupla.Qupla;
 import org.iota.qupla.exception.CodeException;
 import org.iota.qupla.helper.ModuleLoader;
 import org.iota.qupla.qupla.context.QuplaAnyNullContext;
@@ -69,7 +76,7 @@ public class QuplaModule extends BaseExpr
 
     final String pathName = name;
 
-    logLine("QuplaModule: " + pathName);
+    Qupla.log("QuplaModule: " + pathName);
     if (loading.containsKey(pathName))
     {
       throw new CodeException("Import dependency cycle detected");
@@ -138,7 +145,7 @@ public class QuplaModule extends BaseExpr
     new QuplaAnyNullContext().eval(this);
   }
 
-  public void analyzeEntities(final ArrayList<? extends BaseExpr> items)
+  private void analyzeEntities(final ArrayList<? extends BaseExpr> items)
   {
     for (final BaseExpr item : items)
     {
@@ -198,7 +205,7 @@ public class QuplaModule extends BaseExpr
 
   private void parseSource(ModuleLoader moduleLoader, final String source)
   {
-    logLine("QuplaSource: " + source);
+    Qupla.log("QuplaSource: " + source);
     final Tokenizer tokenizer = new Tokenizer();
     tokenizer.module = this;
     tokenizer.read(moduleLoader.getModuleAsStream(source));

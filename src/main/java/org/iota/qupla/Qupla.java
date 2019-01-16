@@ -2,6 +2,8 @@ package org.iota.qupla;
 
 import org.iota.qupla.abra.context.AbraEvalContext;
 import org.iota.qupla.dispatcher.Dispatcher;
+import org.iota.qupla.dispatcher.Entity;
+import org.iota.qupla.dispatcher.FuncEntity;
 import org.iota.qupla.exception.CodeException;
 import org.iota.qupla.exception.ExitException;
 import org.iota.qupla.helper.ModuleLoader;
@@ -11,6 +13,7 @@ import org.iota.qupla.qupla.context.QuplaEvalContext;
 import org.iota.qupla.qupla.context.QuplaPrintContext;
 import org.iota.qupla.qupla.context.QuplaToAbraContext;
 import org.iota.qupla.qupla.context.QuplaToVerilogContext;
+import org.iota.qupla.qupla.context.QuplaTreeViewerContext;
 import org.iota.qupla.qupla.expression.FuncExpr;
 import org.iota.qupla.qupla.expression.MergeExpr;
 import org.iota.qupla.qupla.expression.VectorExpr;
@@ -50,7 +53,7 @@ public class Qupla
     return expr;
   }
 
-  public static void codeException(final CodeException ex)
+  private static void codeException(final CodeException ex)
   {
     final Token token = ex.token;
     if (token == null)
@@ -100,7 +103,7 @@ public class Qupla
 
   public static void log(final String text)
   {
-    BaseExpr.logLine(text);
+    System.out.println(text);
   }
 
   public static void main(final String[] args)
@@ -195,7 +198,7 @@ public class Qupla
       runFpgaGenerator();
     }
 
-    // display the syntax tree
+    // display the code tree
     if (options.contains("-tree"))
     {
       runTreeViewer();
@@ -243,7 +246,7 @@ public class Qupla
     if (options.contains("-abra"))
     {
       final AbraEvalContext abraEvalContext = new AbraEvalContext();
-      abraEvalContext.eval(quplaToAbraContext, expr);
+      abraEvalContext.eval(quplaToAbraContext.abraModule, expr);
       context.value = abraEvalContext.value;
     }
     else
@@ -258,11 +261,21 @@ public class Qupla
 
     if (expr instanceof FuncExpr)
     {
-      final Dispatcher dispatcher = new Dispatcher(QuplaModule.allModules.values());
       final FuncExpr funcExpr = (FuncExpr) expr;
-      context.createEntityEffects(funcExpr.func);
-      dispatcher.runQuants();
-      dispatcher.finished();
+      if (funcExpr.func.envExprs.size() != 0)
+      {
+        // there may be affect statements in there
+        final Dispatcher dispatcher = new Dispatcher();
+        FuncEntity.addEntities(dispatcher, QuplaModule.allModules.values());
+
+        // note that this is a dummy entity, only used to send effects
+        // any returned effects will be picked up by the instance that
+        // was created by FuncEntity.addEntities()
+        final Entity entity = new FuncEntity(funcExpr.func, 0, dispatcher);
+        entity.queueEffectEvents(context.value);
+        dispatcher.runQuants();
+        dispatcher.finished();
+      }
     }
   }
 
@@ -347,7 +360,7 @@ public class Qupla
     if (options.contains("-abra"))
     {
       final AbraEvalContext abraEvalContext = new AbraEvalContext();
-      abraEvalContext.eval(quplaToAbraContext, exec.expr);
+      abraEvalContext.eval(quplaToAbraContext.abraModule, exec.expr);
       context.value = abraEvalContext.value;
     }
     else
@@ -387,6 +400,7 @@ public class Qupla
 
   private static void runTreeViewer()
   {
-    //TODO
+    log("Run Tree Viewer");
+    new QuplaTreeViewerContext().eval(singleModule);
   }
 }

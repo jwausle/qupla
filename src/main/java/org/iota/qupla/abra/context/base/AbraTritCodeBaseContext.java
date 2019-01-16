@@ -1,7 +1,11 @@
 package org.iota.qupla.abra.context.base;
 
+import java.util.ArrayList;
+
 import org.iota.qupla.abra.block.AbraBlockBranch;
+import org.iota.qupla.abra.block.site.base.AbraBaseSite;
 import org.iota.qupla.exception.CodeException;
+import org.iota.qupla.helper.TritConverter;
 
 public abstract class AbraTritCodeBaseContext extends AbraBaseContext
 {
@@ -24,21 +28,31 @@ public abstract class AbraTritCodeBaseContext extends AbraBaseContext
   public char[] buffer = new char[32];
   public int bufferOffset;
 
-  public void evalBranchSites(final AbraBlockBranch branch)
+  protected void evalBranchSites(final AbraBlockBranch branch)
   {
+    // make sure sites are numbered correctly
     branch.numberSites();
 
     putInt(branch.inputs.size());
-    evalSites(branch.inputs);
     putInt(branch.sites.size());
     putInt(branch.outputs.size());
     putInt(branch.latches.size());
+
+    evalSites(branch.inputs);
     evalSites(branch.sites);
     evalSites(branch.outputs);
     evalSites(branch.latches);
   }
 
-  public char getChar()
+  protected void evalSites(final ArrayList<? extends AbraBaseSite> sites)
+  {
+    for (final AbraBaseSite site : sites)
+    {
+      site.eval(this);
+    }
+  }
+
+  protected char getChar()
   {
     switch (getTrit())
     {
@@ -63,7 +77,7 @@ public abstract class AbraTritCodeBaseContext extends AbraBaseContext
 
   private char getChar(final int codePageNr)
   {
-    int index = 0;
+    int index = 13;
     int power = 1;
     for (int i = 0; i < 3; i++)
     {
@@ -79,24 +93,24 @@ public abstract class AbraTritCodeBaseContext extends AbraBaseContext
     return codePage[codePageNr].charAt(index);
   }
 
-  public int getInt()
+  protected int getInt()
   {
     int value = 0;
+    int mask = 1;
     for (char trit = getTrit(); trit != '0'; trit = getTrit())
     {
-      if (trit == '-')
+      if (trit == '1')
       {
-        value <<= 1;
-        continue;
+        value |= mask;
       }
 
-      value = (value << 1) | 1;
+      mask <<= 1;
     }
 
     return value;
   }
 
-  public String getString()
+  protected String getString()
   {
     if (getTrit() == '0')
     {
@@ -113,7 +127,7 @@ public abstract class AbraTritCodeBaseContext extends AbraBaseContext
     return new String(buffer);
   }
 
-  public char getTrit()
+  protected char getTrit()
   {
     if (bufferOffset >= buffer.length)
     {
@@ -123,7 +137,7 @@ public abstract class AbraTritCodeBaseContext extends AbraBaseContext
     return buffer[bufferOffset++];
   }
 
-  public String getTrits(final int size)
+  protected String getTrits(final int size)
   {
     bufferOffset += size;
     if (bufferOffset > buffer.length)
@@ -134,7 +148,7 @@ public abstract class AbraTritCodeBaseContext extends AbraBaseContext
     return new String(buffer, bufferOffset - size, size);
   }
 
-  public AbraTritCodeBaseContext putChar(final char c)
+  protected AbraTritCodeBaseContext putChar(final char c)
   {
     // encode ASCII as efficient as possible
     for (int page = 0; page < codePage.length; page++)
@@ -142,14 +156,14 @@ public abstract class AbraTritCodeBaseContext extends AbraBaseContext
       int index = codePage[page].indexOf(c);
       if (index >= 0)
       {
-        return putTrits(codePageId[page]).putTrits(lutIndexes[index]);
+        return putTrits(codePageId[page]).putTrits(TritConverter.tryteValue[index]);
       }
     }
 
     return putTrits("--").putInt(c);
   }
 
-  public AbraTritCodeBaseContext putInt(final int value)
+  protected AbraTritCodeBaseContext putInt(final int value)
   {
     sizes[value < 0 ? 299 : value < 298 ? value : 298]++;
 
@@ -185,7 +199,7 @@ public abstract class AbraTritCodeBaseContext extends AbraBaseContext
     //    return putTrit('0');
   }
 
-  public AbraTritCodeBaseContext putString(final String text)
+  protected AbraTritCodeBaseContext putString(final String text)
   {
     if (text == null)
     {
@@ -202,7 +216,7 @@ public abstract class AbraTritCodeBaseContext extends AbraBaseContext
     return this;
   }
 
-  public AbraTritCodeBaseContext putTrit(final char trit)
+  protected AbraTritCodeBaseContext putTrit(final char trit)
   {
     if (bufferOffset < buffer.length)
     {
@@ -214,7 +228,7 @@ public abstract class AbraTritCodeBaseContext extends AbraBaseContext
     return putTrits("" + trit);
   }
 
-  public AbraTritCodeBaseContext putTrits(final String trits)
+  protected AbraTritCodeBaseContext putTrits(final String trits)
   {
     if (bufferOffset + trits.length() <= buffer.length)
     {

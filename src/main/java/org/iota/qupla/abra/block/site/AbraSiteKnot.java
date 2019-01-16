@@ -1,25 +1,25 @@
 package org.iota.qupla.abra.block.site;
 
+import org.iota.qupla.abra.AbraModule;
 import org.iota.qupla.abra.block.base.AbraBaseBlock;
 import org.iota.qupla.abra.context.base.AbraBaseContext;
 import org.iota.qupla.abra.funcmanagers.ConstFuncManager;
 import org.iota.qupla.abra.funcmanagers.NullifyFuncManager;
 import org.iota.qupla.abra.funcmanagers.SliceFuncManager;
 import org.iota.qupla.helper.TritVector;
-import org.iota.qupla.qupla.context.QuplaToAbraContext;
 
 public class AbraSiteKnot extends AbraSiteMerge
 {
-  public static ConstFuncManager constants = new ConstFuncManager();
-  public static NullifyFuncManager nullifyFalse = new NullifyFuncManager(false);
-  public static NullifyFuncManager nullifyTrue = new NullifyFuncManager(true);
-  public static SliceFuncManager slicers = new SliceFuncManager();
+  public static final ConstFuncManager constants = new ConstFuncManager();
+  public static final NullifyFuncManager nullifyFalse = new NullifyFuncManager(false);
+  public static final NullifyFuncManager nullifyTrue = new NullifyFuncManager(true);
+  public static final SliceFuncManager slicers = new SliceFuncManager();
 
   public AbraBaseBlock block;
 
-  public void branch(final QuplaToAbraContext context)
+  public void branch(final AbraModule module)
   {
-    for (final AbraBaseBlock branch : context.abraModule.branches)
+    for (final AbraBaseBlock branch : module.branches)
     {
       if (branch.name.equals(name))
       {
@@ -29,9 +29,9 @@ public class AbraSiteKnot extends AbraSiteMerge
     }
   }
 
-  public void concat(final QuplaToAbraContext context)
+  public void concat(final AbraModule module)
   {
-    block = slicers.find(context, size, 0);
+    block = slicers.find(module, size, 0);
   }
 
   @Override
@@ -40,9 +40,9 @@ public class AbraSiteKnot extends AbraSiteMerge
     context.evalKnot(this);
   }
 
-  public void lut(final QuplaToAbraContext context)
+  public void lut(final AbraModule module)
   {
-    for (final AbraBaseBlock lut : context.abraModule.luts)
+    for (final AbraBaseBlock lut : module.luts)
     {
       if (lut.name.equals(name))
       {
@@ -52,19 +52,20 @@ public class AbraSiteKnot extends AbraSiteMerge
     }
   }
 
-  public void nullify(final QuplaToAbraContext context, final boolean trueFalse)
+  public void nullify(final AbraModule module, final boolean trueFalse)
   {
     final NullifyFuncManager nullify = trueFalse ? nullifyTrue : nullifyFalse;
-    block = nullify.find(context, size);
+    block = nullify.find(module, size);
   }
 
-  public void slice(final QuplaToAbraContext context, final int inputSize, final int start)
+  public void slice(final AbraModule module, final int inputSize, final int start)
   {
-    block = slicers.find(context, size, start);
+    //TODO inputSize is not used?????
+    block = slicers.find(module, size, start);
   }
 
-  public void vector(final QuplaToAbraContext context, final TritVector vector)
+  public void vector(final AbraModule module, final TritVector vector)
   {
-    block = constants.find(context, vector);
+    block = constants.find(module, vector);
   }
 }

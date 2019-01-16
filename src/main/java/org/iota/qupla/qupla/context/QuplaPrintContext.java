@@ -89,7 +89,7 @@ public class QuplaPrintContext extends QuplaBaseContext
     fileClose();
   }
 
-  public void evalAffect(final AffectExpr affect)
+  private void evalAffect(final AffectExpr affect)
   {
     append("affect ").append(affect.name);
     if (affect.delay != null)
@@ -320,7 +320,7 @@ public class QuplaPrintContext extends QuplaBaseContext
 
   }
 
-  public void evalJoin(final JoinExpr join)
+  private void evalJoin(final JoinExpr join)
   {
     append("join ").append(join.name);
     if (join.limit != null)
@@ -550,8 +550,8 @@ public class QuplaPrintContext extends QuplaBaseContext
   }
 
   @Override
-  public void evalVector(final VectorExpr integer)
+  public void evalVector(final VectorExpr vector)
   {
-    append(integer.name);
+    append(vector.name);
   }
 }

@@ -14,7 +14,7 @@ public class ImportStmt extends BaseExpr
   private final ModuleLoader moduleLoader;
 
 
-  public ImportStmt(final ImportStmt copy)
+  private ImportStmt(final ImportStmt copy)
   {
     super(copy);
     importModule = copy.importModule;
