@@ -6,15 +6,15 @@ import org.iota.qupla.abra.block.AbraBlockBranch;
 import org.iota.qupla.abra.block.AbraBlockImport;
 import org.iota.qupla.abra.block.AbraBlockLut;
 import org.iota.qupla.abra.block.base.AbraBaseBlock;
-import org.iota.qupla.qupla.context.QuplaToAbraContext;
 
 public class AbraModule
 {
   public int blockNr;
-  public ArrayList<AbraBaseBlock> blocks = new ArrayList<>();
+  public final ArrayList<AbraBaseBlock> blocks = new ArrayList<>();
   public ArrayList<AbraBlockBranch> branches = new ArrayList<>();
-  public ArrayList<AbraBlockImport> imports = new ArrayList<>();
-  public ArrayList<AbraBlockLut> luts = new ArrayList<>();
+  public final ArrayList<AbraBlockImport> imports = new ArrayList<>();
+  public final ArrayList<AbraBlockLut> luts = new ArrayList<>();
+  public int version;
 
   public void addBranch(final AbraBlockBranch branch)
   {
@@ -22,7 +22,7 @@ public class AbraModule
     blocks.add(branch);
   }
 
-  public void addLut(final AbraBlockLut lut)
+  private void addLut(final AbraBlockLut lut)
   {
     luts.add(lut);
     blocks.add(lut);
@@ -53,7 +53,7 @@ public class AbraModule
     }
   }
 
-  public void optimize(final QuplaToAbraContext context)
+  public void optimize()
   {
     // determine reference counts for branches and sites
     for (final AbraBaseBlock branch : branches)
@@ -64,7 +64,7 @@ public class AbraModule
     for (int i = 0; i < branches.size(); i++)
     {
       final AbraBaseBlock branch = branches.get(i);
-      branch.optimize(context);
+      branch.optimize(this);
     }
   }
 }

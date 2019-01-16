@@ -1,5 +1,7 @@
 package org.iota.qupla.qupla.context;
 
+import java.util.ArrayList;
+
 import org.iota.qupla.qupla.context.base.QuplaBaseContext;
 import org.iota.qupla.qupla.expression.AffectExpr;
 import org.iota.qupla.qupla.expression.AssignExpr;
@@ -37,6 +39,18 @@ import org.iota.qupla.qupla.statement.helper.TritVectorDef;
 
 public class QuplaPrintContext extends QuplaBaseContext
 {
+  private void appendTypeArgs(final ArrayList<BaseExpr> typeArgs)
+  {
+    boolean first = true;
+    for (final BaseExpr typeArg : typeArgs)
+    {
+      append(first ? "<" : ", ").append(typeArg.name);
+      first = false;
+    }
+
+    append(">");
+  }
+
   @Override
   public void eval(final QuplaModule module)
   {
@@ -75,7 +89,7 @@ public class QuplaPrintContext extends QuplaBaseContext
     fileClose();
   }
 
-  public void evalAffect(final AffectExpr affect)
+  private void evalAffect(final AffectExpr affect)
   {
     append("affect ").append(affect.name);
     if (affect.delay != null)
@@ -265,14 +279,7 @@ public class QuplaPrintContext extends QuplaBaseContext
     append("func ").append(func.returnType.name).append(" ").append(func.name.split("_")[0]);
     if (func.funcTypes.size() != 0)
     {
-      boolean first = true;
-      for (final BaseExpr funcType : func.funcTypes)
-      {
-        append(first ? "<" : ", ").append(funcType.name);
-        first = false;
-      }
-
-      append(">");
+      appendTypeArgs(func.funcTypes);
     }
 
     boolean first = true;
@@ -293,14 +300,7 @@ public class QuplaPrintContext extends QuplaBaseContext
 
     if (call.funcTypes.size() != 0)
     {
-      boolean first = true;
-      for (final BaseExpr funcType : call.funcTypes)
-      {
-        append(first ? "<" : ", ").append(funcType.name);
-        first = false;
-      }
-
-      append(">");
+      appendTypeArgs(call.funcTypes);
     }
 
     boolean first = true;
@@ -320,7 +320,7 @@ public class QuplaPrintContext extends QuplaBaseContext
 
   }
 
-  public void evalJoin(final JoinExpr join)
+  private void evalJoin(final JoinExpr join)
   {
     append("join ").append(join.name);
     if (join.limit != null)
@@ -464,7 +464,7 @@ public class QuplaPrintContext extends QuplaBaseContext
 
     evalTemplateSignature(template);
 
-    append("{").newline().indent();
+    append(" {").newline().indent();
 
     for (final BaseExpr type : template.types)
     {
@@ -485,14 +485,7 @@ public class QuplaPrintContext extends QuplaBaseContext
   {
     append("template ").append(template.name);
 
-    boolean first = true;
-    for (final BaseExpr param : template.params)
-    {
-      append(first ? "<" : ", ").append(param.name);
-      first = false;
-    }
-
-    append("> ");
+    appendTypeArgs(template.params);
   }
 
   private void evalTritStruct(final TritStructDef struct)
@@ -548,19 +541,17 @@ public class QuplaPrintContext extends QuplaBaseContext
   {
     append("use ").append(use.name);
 
-    boolean first = true;
-    for (final BaseExpr typeArg : use.typeArgs)
+    appendTypeArgs(use.typeArgs);
+    for (UseStmt next = use.nextUse; next != null; next = use.nextUse)
     {
-      append(first ? "<" : ", ").append(typeArg.name);
-      first = false;
+      append(", ");
+      evalUseDefinition(next);
     }
-
-    append(">");
   }
 
   @Override
-  public void evalVector(final VectorExpr integer)
+  public void evalVector(final VectorExpr vector)
   {
-    append(integer.name);
+    append(vector.name);
   }
 }

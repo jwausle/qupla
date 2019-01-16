@@ -12,11 +12,14 @@ import org.iota.qupla.abra.block.site.AbraSiteMerge;
 import org.iota.qupla.abra.block.site.AbraSiteParam;
 import org.iota.qupla.abra.block.site.base.AbraBaseSite;
 import org.iota.qupla.abra.context.AbraAnalyzeContext;
-import org.iota.qupla.abra.context.AbraDebugTritCodeContext;
 import org.iota.qupla.abra.context.AbraOrderBlockContext;
 import org.iota.qupla.abra.context.AbraPrintContext;
+import org.iota.qupla.abra.context.AbraReadDebugInfoContext;
+import org.iota.qupla.abra.context.AbraReadTritCodeContext;
 import org.iota.qupla.abra.context.AbraToVerilogContext;
-import org.iota.qupla.abra.context.AbraTritCodeContext;
+import org.iota.qupla.abra.context.AbraViewTreeContext;
+import org.iota.qupla.abra.context.AbraWriteDebugInfoContext;
+import org.iota.qupla.abra.context.AbraWriteTritCodeContext;
 import org.iota.qupla.exception.CodeException;
 import org.iota.qupla.qupla.context.base.QuplaBaseContext;
 import org.iota.qupla.qupla.expression.AssignExpr;
@@ -37,21 +40,16 @@ import org.iota.qupla.qupla.statement.helper.LutEntry;
 
 public class QuplaToAbraContext extends QuplaBaseContext
 {
-  public static final int[] powers = {
-      1,
-      3,
-      9,
-      27
-  };
   public AbraModule abraModule = new AbraModule();
-  public int bodies;
-  public AbraBlockBranch branch;
-  public AbraBaseSite lastSite;
-  public Stack<AbraBaseSite> stack = new Stack<>();
-  public BaseExpr stmt;
+  private int bodies;
+  private AbraBlockBranch branch;
+  private AbraBaseSite lastSite;
+  private final Stack<AbraBaseSite> stack = new Stack<>();
+  private BaseExpr stmt;
 
   public QuplaToAbraContext()
   {
+    //TODO pass in AbraModule?
   }
 
   private void addSite(final AbraBaseSite site)
@@ -69,16 +67,34 @@ public class QuplaToAbraContext extends QuplaBaseContext
   @Override
   public void eval(final QuplaModule module)
   {
+    // generate dumb Abra code into abraModule
     super.eval(module);
 
-    abraModule.optimize(this);
+    abraModule.optimize();
 
     new AbraOrderBlockContext().eval(abraModule);
     new AbraPrintContext().eval(abraModule);
     new AbraToVerilogContext().eval(abraModule);
+    new AbraViewTreeContext().eval(abraModule);
+
+    final AbraWriteTritCodeContext codeWriter = new AbraWriteTritCodeContext();
+    codeWriter.eval(abraModule);
+    final AbraWriteDebugInfoContext debugWriter = new AbraWriteDebugInfoContext();
+    debugWriter.eval(abraModule);
+
+    // we start a new AbraModule from the generated tritcode
+    abraModule = new AbraModule();
+    final AbraReadTritCodeContext codeReader = new AbraReadTritCodeContext();
+    codeReader.buffer = new String(codeWriter.buffer, 0, codeWriter.bufferOffset).toCharArray();
+    codeReader.eval(abraModule);
+    final AbraReadDebugInfoContext debugReader = new AbraReadDebugInfoContext();
+    debugReader.buffer = new String(debugWriter.buffer, 0, debugWriter.bufferOffset).toCharArray();
+    debugReader.eval(abraModule);
     new AbraAnalyzeContext().eval(abraModule);
-    new AbraDebugTritCodeContext().eval(abraModule);
-    new AbraTritCodeContext().eval(abraModule);
+
+    final AbraPrintContext printer = new AbraPrintContext();
+    printer.fileName = "NewAbra.txt";
+    printer.eval(abraModule);
   }
 
   @Override
@@ -114,7 +130,7 @@ public class QuplaToAbraContext extends QuplaBaseContext
     evalConcatExprs(exprs);
   }
 
-  public void evalConcatExprs(final ArrayList<BaseExpr> exprs)
+  private void evalConcatExprs(final ArrayList<BaseExpr> exprs)
   {
     final AbraSiteKnot site = new AbraSiteKnot();
     for (final BaseExpr expr : exprs)
@@ -131,7 +147,7 @@ public class QuplaToAbraContext extends QuplaBaseContext
       }
     }
 
-    site.concat(this);
+    site.concat(abraModule);
     addSite(site);
   }
 
@@ -226,7 +242,7 @@ public class QuplaToAbraContext extends QuplaBaseContext
       site.inputs.add(lastSite);
     }
 
-    site.branch(this);
+    site.branch(abraModule);
     if (site.block == null)
     {
       throw new CodeException("Cannot find block: " + site.name);
@@ -251,31 +267,35 @@ public class QuplaToAbraContext extends QuplaBaseContext
     // note: lut output size can be >1, so we need a lut per output trit
     for (int tritNr = 0; tritNr < lut.size; tritNr++)
     {
-      final char[] lookup = "@@@@@@@@@@@@@@@@@@@@@@@@@@@".toCharArray();
+      final char[] lookup = AbraBlockLut.NULL_LUT.toCharArray();
 
       for (final LutEntry entry : lut.entries)
       {
         // build index for this entry in lookup table
         int index = 0;
-        for (int i = 0; i < entry.inputs.length(); i++)
+        int power = 1;
+        for (int i = 0; i < lut.inputSize; i++)
         {
           final char trit = entry.inputs.charAt(i);
-          final int val = trit == '-' ? 0 : trit == '0' ? 1 : 2;
-          index += val * powers[i];
+          if (trit != '-')
+          {
+            index += trit == '1' ? power * 2 : power;
+          }
+
+          power *= 3;
         }
 
         // set corresponding character
         lookup[index] = entry.outputs.charAt(tritNr);
       }
 
+      // powers of 3:              1     3     9    27
+      final int lookupSize = "\u0001\u0003\u0009\u001b".charAt(lut.inputSize);
+
       // repeat the entries across the entire table if necessary
-      final int lookupSize = powers[lut.inputSize];
       for (int offset = lookupSize; offset < 27; offset += lookupSize)
       {
-        for (int i = 0; i < lookupSize; i++)
-        {
-          lookup[offset + i] = lookup[i];
-        }
+        System.arraycopy(lookup, 0, lookup, offset, lookupSize);
       }
 
       final AbraBlockLut block = abraModule.addLut(lut.name + "_" + tritNr, new String(lookup));
@@ -306,7 +326,7 @@ public class QuplaToAbraContext extends QuplaBaseContext
         site.inputs.add(site.inputs.get(0));
       }
 
-      site.lut(this);
+      site.lut(abraModule);
       if (site.block == null)
       {
         throw new CodeException("Cannot find lut: " + site.name);
@@ -320,7 +340,7 @@ public class QuplaToAbraContext extends QuplaBaseContext
 
     if (concat.inputs.size() > 1)
     {
-      concat.concat(this);
+      concat.concat(abraModule);
       addSite(concat);
     }
   }
@@ -379,7 +399,7 @@ public class QuplaToAbraContext extends QuplaBaseContext
     final AbraSiteKnot site = new AbraSiteKnot();
     site.from(slice);
     site.inputs.add(varSite);
-    site.slice(this, varSite.size, slice.start);
+    site.slice(abraModule, varSite.size, slice.start);
     addSite(site);
   }
 
@@ -403,12 +423,12 @@ public class QuplaToAbraContext extends QuplaBaseContext
   }
 
   @Override
-  public void evalVector(final VectorExpr integer)
+  public void evalVector(final VectorExpr vector)
   {
     final AbraSiteKnot site = new AbraSiteKnot();
-    site.from(integer);
+    site.from(vector);
     site.inputs.add(branch.inputs.get(0));
-    site.vector(this, integer.vector);
+    site.vector(abraModule, vector.vector);
     addSite(site);
   }
 }

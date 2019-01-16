@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import org.iota.qupla.abra.AbraModule;
 import org.iota.qupla.abra.block.AbraBlockBranch;
 import org.iota.qupla.abra.block.AbraBlockImport;
 import org.iota.qupla.abra.block.AbraBlockLut;
@@ -16,7 +17,6 @@ import org.iota.qupla.abra.block.site.base.AbraBaseSite;
 import org.iota.qupla.abra.context.base.AbraBaseContext;
 import org.iota.qupla.helper.StateValue;
 import org.iota.qupla.helper.TritVector;
-import org.iota.qupla.qupla.context.QuplaToAbraContext;
 import org.iota.qupla.qupla.expression.FuncExpr;
 import org.iota.qupla.qupla.expression.VectorExpr;
 import org.iota.qupla.qupla.expression.base.BaseExpr;
@@ -31,22 +31,20 @@ public class AbraEvalContext extends AbraBaseContext
   private static final TritVector tritOne = new TritVector(1, '1');
   private static final TritVector tritZero = new TritVector(1, '0');
 
-  public QuplaToAbraContext abra;
-  public ArrayList<TritVector> args = new ArrayList<>();
+  public final ArrayList<TritVector> args = new ArrayList<>();
   public int callNr;
-  public byte[] callTrail = new byte[4096];
+  public final byte[] callTrail = new byte[4096];
   public TritVector[] stack;
   public TritVector value;
 
-  public void eval(final QuplaToAbraContext context, final BaseExpr expr)
+  public void eval(final AbraModule module, final BaseExpr expr)
   {
-    abra = context;
     if (expr instanceof FuncExpr)
     {
       final FuncExpr funcExpr = (FuncExpr) expr;
-      for (final AbraBlockBranch branch : context.abraModule.branches)
+      for (final AbraBlockBranch branch : module.branches)
       {
-        if (branch.origin == funcExpr.func)
+        if (branch.name.equals(funcExpr.name))
         {
           args.clear();
           for (final BaseExpr arg : funcExpr.args)
@@ -225,7 +223,8 @@ public class AbraEvalContext extends AbraBaseContext
       error("LUT needs exactly 3 inputs");
     }
 
-    char trits[] = new char[3];
+    int index = 13;
+    int power = 1;
     for (int i = 0; i < 3; i++)
     {
       final TritVector arg = args.get(i);
@@ -234,26 +233,40 @@ public class AbraEvalContext extends AbraBaseContext
         error("LUT inputs need to be exactly 1 trit");
       }
 
-      trits[i] = arg.trit(0);
-    }
-
-    final Integer index = indexFromTrits.get(new String(trits));
-    if (index != null)
-    {
-      switch (lut.lookup.charAt(index))
+      switch (arg.trit(0))
       {
+      case '-':
+        index -= power;
+        break;
+
       case '0':
-        value = tritZero;
-        return;
+        break;
 
       case '1':
-        value = tritOne;
-        return;
+        index += power;
+        break;
 
-      case '-':
-        value = tritMin;
+      default:
+        value = tritNull;
         return;
       }
+
+      power *= 3;
+    }
+
+    switch (lut.lookup.charAt(index))
+    {
+    case '0':
+      value = tritZero;
+      return;
+
+    case '1':
+      value = tritOne;
+      return;
+
+    case '-':
+      value = tritMin;
+      return;
     }
 
     value = tritNull;

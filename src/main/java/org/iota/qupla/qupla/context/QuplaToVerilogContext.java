@@ -66,7 +66,7 @@ public class QuplaToVerilogContext extends QuplaBaseContext
     append(" }");
   }
 
-  public void evalConcatExprs(final ArrayList<BaseExpr> exprs)
+  private void evalConcatExprs(final ArrayList<BaseExpr> exprs)
   {
     if (exprs.size() == 1)
     {
@@ -290,9 +290,9 @@ public class QuplaToVerilogContext extends QuplaBaseContext
   }
 
   @Override
-  public void evalVector(final VectorExpr integer)
+  public void evalVector(final VectorExpr vector)
   {
-    appendVector(integer.vector.trits());
+    appendVector(vector.vector.trits());
   }
 
   private String size(final int trits)

@@ -6,7 +6,7 @@ import org.iota.qupla.qupla.expression.base.BaseExpr;
 
 public abstract class AbraBaseSite
 {
-  private static AbraPrintContext printer = new AbraPrintContext();
+  public static final AbraPrintContext printer = new AbraPrintContext();
 
   public int index;
   public boolean isLatch;
@@ -44,16 +44,6 @@ public abstract class AbraBaseSite
     {
       nullifyTrue.references++;
     }
-  }
-
-  public int refer(final int site)
-  {
-    //    if (site < index)
-    //    {
-    //      return index - 1 - site;
-    //    }
-
-    return site;
   }
 
   @Override

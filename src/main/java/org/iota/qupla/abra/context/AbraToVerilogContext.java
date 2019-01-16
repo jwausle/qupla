@@ -14,11 +14,12 @@ import org.iota.qupla.abra.block.site.AbraSiteParam;
 import org.iota.qupla.abra.block.site.base.AbraBaseSite;
 import org.iota.qupla.abra.context.base.AbraBaseContext;
 import org.iota.qupla.helper.BaseContext;
+import org.iota.qupla.helper.TritConverter;
 import org.iota.qupla.helper.Verilog;
 
 public class AbraToVerilogContext extends AbraBaseContext
 {
-  public ArrayList<AbraBaseSite> branchSites = new ArrayList<>();
+  public final ArrayList<AbraBaseSite> branchSites = new ArrayList<>();
   private final Verilog verilog = new Verilog();
 
   private BaseContext appendVector(final String trits)
@@ -242,7 +243,7 @@ public class AbraToVerilogContext extends AbraBaseContext
         continue;
       }
 
-      appendVector(lutIndexes[i]).append(": ").append(lutName).append(" = ");
+      appendVector(TritConverter.tryteValue[i]).append(": ").append(lutName).append(" = ");
       appendVector("" + trit).append(";").newline();
     }
 

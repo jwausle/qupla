@@ -1,7 +1,6 @@
 package org.iota.qupla.abra.context;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 
 import org.iota.qupla.abra.AbraModule;
 import org.iota.qupla.abra.block.AbraBlockBranch;
@@ -12,89 +11,83 @@ import org.iota.qupla.abra.block.site.AbraSiteLatch;
 import org.iota.qupla.abra.block.site.AbraSiteMerge;
 import org.iota.qupla.abra.block.site.AbraSiteParam;
 import org.iota.qupla.abra.block.site.base.AbraBaseSite;
-import org.iota.qupla.abra.context.base.AbraTritCodeBaseContext;
+import org.iota.qupla.abra.context.base.AbraBaseContext;
 
-public class AbraOrderBlockContext extends AbraTritCodeBaseContext
+public class AbraViewTreeContext extends AbraBaseContext
 {
-  private final HashSet<AbraBlockBranch> input = new HashSet<>();
-  private final ArrayList<AbraBlockBranch> output = new ArrayList<>();
-
   @Override
   public void eval(final AbraModule module)
   {
-    input.addAll(module.branches);
-
+    final boolean oldStatements = AbraBaseSite.printer.statements;
+    AbraBaseSite.printer.statements = false;
+    fileOpen("AbraTree.txt");
     super.eval(module);
-
-    module.branches = output;
-
-    module.blocks.clear();
-    module.blocks.addAll(module.luts);
-    module.blocks.addAll(module.branches);
-    module.blocks.addAll(module.imports);
-
-    module.numberBlocks();
+    fileClose();
+    AbraBaseSite.printer.statements = oldStatements;
   }
 
   @Override
   public void evalBranch(final AbraBlockBranch branch)
   {
-    if (!input.contains(branch))
+    newline().append("evalBranch: " + branch).newline();
+    indent();
+    evalBranchSites(branch.inputs, "input");
+    evalBranchSites(branch.sites, "body");
+    evalBranchSites(branch.outputs, "output");
+    evalBranchSites(branch.latches, "latch");
+    undent();
+  }
+
+  private void evalBranchSites(final ArrayList<? extends AbraBaseSite> sites, final String type)
+  {
+    if (sites.size() == 0)
     {
       return;
     }
 
-    input.remove(branch);
-
-    for (final AbraBaseSite site : branch.sites)
+    append(type + " sites:").newline();
+    indent();
+    for (final AbraBaseSite site : sites)
     {
       site.eval(this);
     }
 
-    for (final AbraBaseSite output : branch.outputs)
-    {
-      output.eval(this);
-    }
-
-    for (final AbraBaseSite latch : branch.latches)
-    {
-      latch.eval(this);
-    }
-
-    output.add(branch);
+    undent();
   }
 
   @Override
   public void evalImport(final AbraBlockImport imp)
   {
+    append("evalImport: " + imp).newline();
   }
 
   @Override
   public void evalKnot(final AbraSiteKnot knot)
   {
-    if (knot.block instanceof AbraBlockBranch)
-    {
-      evalBranch((AbraBlockBranch) knot.block);
-    }
+    append("evalKnot: " + knot).newline();
   }
 
   @Override
   public void evalLatch(final AbraSiteLatch latch)
   {
+    append("evalLatch: " + latch).newline();
   }
 
   @Override
   public void evalLut(final AbraBlockLut lut)
   {
+    append("evalLut: " + lut).newline();
   }
 
   @Override
   public void evalMerge(final AbraSiteMerge merge)
   {
+    append("evalMerge: " + merge).newline();
   }
 
   @Override
   public void evalParam(final AbraSiteParam param)
   {
+    append("evalParam: " + param).newline();
   }
 }

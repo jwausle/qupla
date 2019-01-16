@@ -36,11 +36,11 @@ public class QuplaTest {
 
     @Test
     public void runFibonacciTest() throws IOException, InterruptedException {
-        Process qupla = execCmdline("Examples fibonacci(10)");
+        Process qupla = execCmdline("Examples nextOne(10)");
         qupla.waitFor(QUPLA_EXEC_TIMEOUT, TimeUnit.SECONDS);
 
-        Assert.assertTrue("Cannot find 'Eval: fibonacci(10)' in \n" + console.getContent(), console.anyLineContains("Eval: fibonacci(10)"));
-        Assert.assertTrue("Cannot find '  ==> (55)...' in \n" + console.getContent(), console.anyLineContains("  ==> (55) 100-10000000000000000000000000000000000000000000000000000000000000000000000000000"));
+        Assert.assertTrue("Cannot find 'Eval: fibonacci(10)' in \n" + console.getContent(), console.anyLineContains("Eval: nextOne(10)"));
+        Assert.assertTrue("Cannot find '  ==> (55)...' in \n" + console.getContent(), console.anyLineContains("  ==> fib2: (55) 100-10000000000000000000000"));
     }
 
     /*

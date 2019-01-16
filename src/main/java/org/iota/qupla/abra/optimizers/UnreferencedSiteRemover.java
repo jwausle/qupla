@@ -1,17 +1,18 @@
 package org.iota.qupla.abra.optimizers;
 
+import org.iota.qupla.abra.AbraModule;
 import org.iota.qupla.abra.block.AbraBlockBranch;
+import org.iota.qupla.abra.block.site.AbraSiteLatch;
 import org.iota.qupla.abra.block.site.AbraSiteMerge;
 import org.iota.qupla.abra.block.site.base.AbraBaseSite;
 import org.iota.qupla.abra.optimizers.base.BaseOptimizer;
-import org.iota.qupla.qupla.context.QuplaToAbraContext;
 import org.iota.qupla.qupla.expression.base.BaseExpr;
 
 public class UnreferencedSiteRemover extends BaseOptimizer
 {
-  public UnreferencedSiteRemover(final QuplaToAbraContext context, final AbraBlockBranch branch)
+  public UnreferencedSiteRemover(final AbraModule module, final AbraBlockBranch branch)
   {
-    super(context, branch);
+    super(module, branch);
     reverse = true;
   }
 
@@ -55,6 +56,14 @@ public class UnreferencedSiteRemover extends BaseOptimizer
     for (index = branch.sites.size() - 1; index >= 0; index--)
     {
       processSite((AbraSiteMerge) branch.sites.get(index));
+    }
+
+    for (index = branch.latches.size() - 1; index >= 0; index--)
+    {
+      if (branch.latches.get(index) instanceof AbraSiteLatch)
+      {
+        branch.latches.remove(index);
+      }
     }
   }
 
