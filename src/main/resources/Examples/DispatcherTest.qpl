@@ -1,3 +1,4 @@
+import Fibonacci
 // tests Entity-Environment-Effect processing by the Qubic Dispatcher
 
 // note that it is common sense to create specific functions when you
